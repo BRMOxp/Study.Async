@@ -47,7 +47,7 @@ def novo_flashcard(request):
         flashcard.save()
 
         messages.add_message(request, constants.SUCCESS, "Flashcard cadastrado com sucesso")
-        return redirect('/flashcard/novo_flashcard')
+        return redirect('/flashcard/novo_flashcard/')
 
 def deletar_flashcard(request, id):
       flashcard = Flashcard.objects.get(id=id)
@@ -62,6 +62,8 @@ def deletar_flashcard(request, id):
       return redirect('/flashcard/novo_flashcard/')
 
 def iniciar_desafio(request):
+      if not request.user.is_authenticated:
+            return redirect('/usuarios/logar')
       if request.method == "GET":
             categorias = Categoria.objects.all()
             dificuldades = Flashcard.DIFICULDADE_CHOICES
@@ -81,16 +83,16 @@ def iniciar_desafio(request):
 
             desafio.save()
 
-            desafio.categoria.add(*categorias)
+            for categoria in categorias:
+                  desafio.categoria.add(categoria)
 
             flashcards = (
-                  Flashcard.objects
-                  .filter(user=request.user)
+                  Flashcard.objects.filter(user=request.user)
                   .filter(dificuldade=dificuldade)
                   .filter(categoria_id__in= categorias)
                   .order_by('?')
             )
-            
+      
             if flashcards.count() < int(qtd_perguntas):
                   return redirect('/flashcard/iniciar_desafio/')
             
@@ -104,10 +106,23 @@ def iniciar_desafio(request):
                   desafio.flashcards.add(flashcard_desafio)
 
             desafio.save()
+            return redirect('/flashcard/listar_desafio/')
       
 def listar_desafio(request):
+      if not request.user.is_authenticated:
+            return redirect('/usuarios/logar')
       desafios = Desafio.objects.filter(user = request.user)
-      return render(request, 'listar_desafio.html', {'desafios': desafios})
+      if request.method == 'GET':
+            categorias = Categoria.objects.all()
+            dificuldades = Flashcard.DIFICULDADE_CHOICES
+            categoria_filtrar = request.GET.get('categoria')
+            dificuldade_filtrar = request.GET.get('dificuldade')
+            if categoria_filtrar:
+                  desafios = desafios.filter(categoria__id=categoria_filtrar)
+            if dificuldade_filtrar:
+                  desafios = desafios.filter(dificuldade=dificuldade_filtrar)
+      return render(request, 'listar_desafio.html', {'desafios': desafios, 'categorias': categorias,
+                                                   'dificuldades': dificuldades,})
 
 def desafio(request, id):
       desafio = Desafio.objects.get(id=id)
