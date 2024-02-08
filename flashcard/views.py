@@ -112,15 +112,16 @@ def listar_desafio(request):
       if not request.user.is_authenticated:
             return redirect('/usuarios/logar')
       desafios = Desafio.objects.filter(user = request.user)
-      if request.method == 'GET':
-            categorias = Categoria.objects.all()
-            dificuldades = Flashcard.DIFICULDADE_CHOICES
-            categoria_filtrar = request.GET.get('categoria')
-            dificuldade_filtrar = request.GET.get('dificuldade')
-            if categoria_filtrar:
-                  desafios = desafios.filter(categoria__id=categoria_filtrar)
-            if dificuldade_filtrar:
-                  desafios = desafios.filter(dificuldade=dificuldade_filtrar)
+
+      categorias = Categoria.objects.all()
+      dificuldades = Flashcard.DIFICULDADE_CHOICES
+      
+      categoria = request.GET.get('categoria')
+      dificuldade = request.GET.get('dificuldade')
+      if categoria:
+            desafios = desafios.filter(categoria__id=categoria)
+      if dificuldade:
+            desafios = desafios.filter(dificuldade=dificuldade)
       return render(request, 'listar_desafio.html', {'desafios': desafios, 'categorias': categorias,
                                                    'dificuldades': dificuldades,})
 
